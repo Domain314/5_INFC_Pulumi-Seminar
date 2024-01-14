@@ -19,13 +19,8 @@ async function createInfrastructure() {
     const mySubnet = subnet.createSubnet(myVpc, myRouteTable);
     const mySecurityGroup = securityGroup.createSecurityGroup(myVpc);
     const myNetworkInterface = networkInterface.createNetworkInterface(mySubnet, mySecurityGroup);
-    const myEip = elasticIP.createElasticIp();
+    const myEip = elasticIP.createElasticIp(myNetworkInterface);
     const myInstance = ec2Instance.createEc2Instance(mySubnet, mySecurityGroup);
-
-    const eipAssociation = new aws.ec2.EipAssociation("eipAssoc", {
-        instanceId: myInstance.id,
-        allocationId: myEip.allocationId
-    });
 }
 
 createInfrastructure();
