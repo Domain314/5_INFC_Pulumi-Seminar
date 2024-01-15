@@ -25,11 +25,17 @@ async function createInfrastructure() {
     const mySubnets = [];
     for (let i = 0; i < ec2Amount; i++) {
         mySubnets.push(subnet.createSubnet(myVpc, myRouteTable, az[i], `10.0.${i}.0/24`));
-
     }
 
+    const myTargetGroup = new aws.lb.TargetGroup("myTargetGroup", {
+        port: 80,
+        protocol: "HTTP",
+        vpcId: myVpc.id,
+    });
+
     // Create Load Balancer
-    const alb = loadBalancer.createLoadBalancer(myVpc.id, mySubnets, mySecurityGroup.id);
+    const alb = loadBalancer.createLoadBalancer(myVpc.id, mySubnets, mySecurityGroup.id, myTargetGroup);
+
 
     // Create and attach EC2 instances to the Load Balancer
     for (let i = 0; i < ec2Amount; i++) {
@@ -37,57 +43,16 @@ async function createInfrastructure() {
 
         // Attach the EC2 instance to the Load Balancer
         new aws.alb.TargetGroupAttachment(`web-tga-${i}`, {
-            targetGroupArn: alb.defaultTargetGroup.arn,
+            targetGroupArn: myTargetGroup.arn,
             targetId: instance.id,
             port: 80
         });
     }
 
     // Export the URL of the Load Balancer
-    // exports.url = alb.loadBalancer.dnsName;
     return alb.loadBalancer.dnsName;
 }
 
-
-// const mySubnet1 = subnet.createSubnet(myVpc, myRouteTable, 'a', '10.0.1.0/24');
-// const mySubnet2 = subnet.createSubnet(myVpc, myRouteTable, 'b', '10.0.2.0/24');
-// const myNetworkInterface = networkInterface.createNetworkInterface(mySubnet, mySecurityGroup);
-// const myEip = elasticIP.createElasticIp();
-
-// async function createInfrastructure() {
-//     const myVpc = vpc.createVpc();
-//     const myIgw = internetGateway.createInternetGateway(myVpc);
-//     const myRouteTable = routeTable.createRouteTable(myVpc, myIgw);
-//     const mySubnet = subnet.createSubnet(myVpc, myRouteTable);
-//     const mySecurityGroup = securityGroup.createSecurityGroup(myVpc);
-//     const myNetworkInterface = networkInterface.createNetworkInterface(mySubnet, mySecurityGroup);
-//     const myEip = elasticIP.createElasticIp();
-//     const myInstance = ec2Instance.createEc2Instance(mySubnet, mySecurityGroup);
-
-//     const eipAssociation = new aws.ec2.EipAssociation("eipAssoc", {
-//         instanceId: myInstance.id,
-//         allocationId: myEip.allocationId
-//     });
-// }
-
-// createInfrastructure();
 createInfrastructure().then(loadBalancerDns => {
     exports.loadBalancerDns = loadBalancerDns;
 });
-
-// async function createInfrastructure() {
-//     const myVpc = vpc.createVpc();
-//     const myIgw = internetGateway.createInternetGateway(myVpc);
-//     const myRouteTable = routeTable.createRouteTable(myVpc, myIgw);
-//     const mySubnet = subnet.createSubnet(myVpc, myRouteTable);
-//     const mySecurityGroup = securityGroup.createSecurityGroup(myVpc);
-
-//     // Create multiple instances
-//     const instances = createManyEc2Instances(mySubnet, mySecurityGroup, 3); // Specify the desired count
-
-//     // Create a load balancer
-//     const { loadBalancer } = createLoadBalancer(myVpc, instances);
-
-//     // Return the DNS name of the load balancer
-//     return loadBalancer.dnsName;
-// }

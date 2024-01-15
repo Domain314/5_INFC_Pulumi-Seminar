@@ -9,7 +9,6 @@ function createSubnet(vpc, routeTable, zone, cidr) {
             Name: "mySubnet",
         },
         availabilityZone: zone
-        // availabilityZone: `us-east-1${zone}`
     });
 
     const routeTableAssociation = new aws.ec2.RouteTableAssociation(`myRouteTableAssociation-${zone}`, {
